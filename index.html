@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>iSense - Intelligent Sensitive Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="wrapper">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <img src="static/images/dataplatform.png" alt="iSense" class="sidebar-logo">
+                <h3>iSense</h3>
+            </div>
+            <div class="sidebar-menu">
+                <a href="#">New Conversation</a>
+                <a href="#">Conversations</a>
+            </div>
+        </div>
+        <div class="chat-container">
+            <div class="chat-header">
+                <div id="msger-header-title" class="msger-header-title" data-privileged-user="{{privilege}}">
+                    <p style="text-align:right">{{userName}}</p>
+                    <div class="icon-style">
+                        <i class="fas fa-user"></i> - Ask iSense - <i class="fas fa-user"></i>
+                    </div>
+                    <a href="{{logoutURL}}"><i class='fas fa-sign-out-alt' style='float:right;color:red'></i></a>
+                </div>
+            </div>
+            <div class="chat-content">
+                <div class="msg left-msg">
+                    <div class="msg-img" style="background-image: url('images/dataplatform.png')"></div>
+                    <div class="msg-bubble">
+                        <div class="msg-info">
+                            <div class="msg-info-name">iSense</div>
+                        </div>
+                        <div class="msg-text">
+                            Hi {{userName}}, I am iSense - Intelligent Sensitive Report Analyzer! Go ahead and ask me a
+                            query.
+                            <br />DISCLAIMER: PII data will be obfuscated. 😊
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <form class="msger-inputarea">
+                    <input type="text" class="msger-input" id="textInput" placeholder="Enter your query...">
+                    <button type="submit" class="msger-send-btn">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src='https://use.fontawesome.com/releases/v5.0.13/js/all.js'></script>
+    <script>
+        const msgerForm = document.querySelector(".msger-inputarea");
+        const msgerInput = document.querySelector(".msger-input");
+        const msgerChat = document.querySelector(".chat-content");
+
+        // Icons and names
+        const BOT_IMG = "static/images/dataplatform.png";
+        const PERSON_IMG = "static/images/user.png";
+        const BOT_NAME = "iSense";
+        const PERSON_NAME = "You";
+
+        msgerForm.addEventListener("submit", event => {
+            event.preventDefault();
+
+            const msgText = msgerInput.value;
+            if (!msgText) return;
+
+            appendMessage(PERSON_NAME, PERSON_IMG, "right", msgText);
+            msgerInput.value = "";
+            botResponse(msgText);
+        });
+        function getMessageHtml(name, img, side, textEnc, textDec, privilege, timestamp) {
+            let msgHTML = "";
+            let escTextEnc = escape(textEnc);
+            let escTextDec = escape(textDec);
+
+            msgHTML = `
+<div class="msg ${side}-msg">
+  <div class="msg-img" style="background-image: url(${img})"></div>
+  <div class="msg-bubble">
+    <div class="msg-info">
+      <div class="msg-info-name">${name}</div>
+      <div class="msg-info-time">${formatDate(new Date())}</div>
+    </div>
+    <div id="msg-text-${timestamp}" class="msg-text"${privilege ? ` data-encoded-text="${escTextEnc}" data-decoded-text="${escTextDec}"` : ''}>${textEnc}</div>
+  </div>
+  ${privilege ? `<span class="data-toggle-icon"><i id="data-toggle-icon-${timestamp}" class="fas fa-eye" onclick="handleDataToggle(this, '${timestamp}')"></i></span>` : ''} 
+</div>
+`;
+            return msgHTML;
+        }
+
+        function handleDataToggle(o, ts) {
+            const msgTextDiv = document.getElementById(`msg-text-${ts}`);
+            const isEncoded = o.classList.contains("fa-eye");
+
+            o.classList.toggle("fa-eye", !isEncoded);
+            o.classList.toggle("fa-eye-slash", isEncoded);
+
+            if (msgTextDiv) {
+                msgTextDiv.innerHTML = isEncoded ? unescape(msgTextDiv.getAttribute("data-decoded-text")) : unescape(msgTextDiv.getAttribute("data-encoded-text"));
+            }
+        }
+
+        function appendMessage(name, img, side, textEnc, textDec, privilege) {
+            const timestamp = Date.now();
+            const msgHTML = getMessageHtml(name, img, side, textEnc, textDec, privilege, timestamp);
+            msgerChat.insertAdjacentHTML("beforeend", msgHTML);
+            msgerChat.scrollTop += 500;
+        }
+
+        function botResponse(rawText) {
+            const queryData = JSON.stringify({ query: rawText });
+
+            // Simulated response for frontend development
+            const simulatedData = {
+                answerEnc: "This is a simulated response.",
+                answerDec: "This is the full response."
+            };
+            const msgTextEnc = simulatedData.answerEnc;
+            const msgTextDec = simulatedData.answerDec;
+            const privilege = document.getElementById("msger-header-title").getAttribute("data-privileged-user") === 'true';
+            appendMessage(BOT_NAME, BOT_IMG, "left", msgTextEnc, msgTextDec, privilege);
+        }
+
+        // Utils
+        function get(selector, root = document) {
+            return root.querySelector(selector);
+        }
+
+        function formatDate(date) {
+            const h = "0" + date.getHours();
+            const m = "0" + date.getMinutes();
+            return `${h.slice(-2)}:${m.slice(-2)}`;
+        }
+
+    </script>
+
+</body>
+
+</html>
